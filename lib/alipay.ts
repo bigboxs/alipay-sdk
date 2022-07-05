@@ -230,9 +230,9 @@ class AlipaySdk {
       resolve(`
         <form action="${url}" method="post" name="${formName}" id="${formName}">
           ${Object.keys(execParams).map((key) => {
-        const value = String(execParams[key]).replace(/\"/g, '&quot;');
-        return `<input type="hidden" name="${key}" value="${value}" />`;
-      }).join('')}
+            const value = String(execParams[key]).replace(/\"/g, '&quot;');
+            return `<input type="hidden" name="${key}" value="${value}" />`;
+          }).join('')}
         </form>
         <script>document.forms["${formName}"].submit();</script>
       `);
