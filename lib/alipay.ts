@@ -13,84 +13,11 @@ import * as decamelize from 'decamelize';
 import * as camelcaseKeys from 'camelcase-keys';
 import * as snakeCaseKeys from 'snakecase-keys';
 
-import AliPayForm from './form';
-import { sign, ALIPAY_ALGORITHM_MAPPING, aesDecrypt } from './util';
+import { AlipaySdkConfig, AlipaySdkCommonResult, IRequestParams, IRequestOption } from './interface';
 import { getSNFromPath, getSN, loadPublicKey, loadPublicKeyFromPath } from './antcertutil';
+import { sign, ALIPAY_ALGORITHM_MAPPING, aesDecrypt } from './util';
 
 const pkg = require('../package.json');
-
-export interface AlipaySdkConfig {
-  /** 应用ID */
-  appId: string;
-  /**
-   * 应用私钥字符串
-   * RSA签名验签工具：https://docs.open.alipay.com/291/106097）
-   * 密钥格式一栏请选择 “PKCS1(非JAVA适用)”
-   */
-  privateKey: string;
-  signType?: 'RSA2' | 'RSA';
-  /** 支付宝公钥（需要对返回值做验签时候必填） */
-  alipayPublicKey?: string;
-  /** 网关 */
-  gateway?: string;
-  /** 网关超时时间（单位毫秒，默认 5s） */
-  timeout?: number;
-  /** 是否把网关返回的下划线 key 转换为驼峰写法 */
-  camelcase?: boolean;
-  /** 编码（只支持 utf-8） */
-  charset?: 'utf-8';
-  /** api版本 */
-  version?: '1.0';
-  urllib?: any;
-  /** 指定private key类型, 默认： PKCS1, PKCS8: PRIVATE KEY, PKCS1: RSA PRIVATE KEY */
-  keyType?: 'PKCS1' | 'PKCS8';
-  /** 应用公钥证书文件路径 */
-  appCertPath?: string;
-  /** 应用公钥证书文件内容 */
-  appCertContent?: string | Buffer;
-  /** 应用公钥证书sn */
-  appCertSn?: string;
-  /** 支付宝根证书文件路径 */
-  alipayRootCertPath?: string;
-  /** 支付宝根证书文件内容 */
-  alipayRootCertContent?: string | Buffer;
-  /** 支付宝根证书sn */
-  alipayRootCertSn?: string;
-  /** 支付宝公钥证书文件路径 */
-  alipayPublicCertPath?: string;
-  /** 支付宝公钥证书文件内容 */
-  alipayPublicCertContent?: string | Buffer;
-  /** 支付宝公钥证书sn */
-  alipayCertSn?: string;
-  /** AES密钥，调用AES加解密相关接口时需要 */
-  encryptKey?: string;
-  /** 服务器地址 */
-  wsServiceUrl?: string;
-}
-
-export interface AlipaySdkCommonResult {
-  code: string;
-  msg: string;
-  sub_code?: string;
-  sub_msg?: string;
-  [key: string]: any;
-}
-
-export interface IRequestParams {
-  [key: string]: any;
-  bizContent?: any;
-  // 自动AES加解密
-  needEncrypt?:boolean;
-}
-
-export interface IRequestOption {
-  validateSign?: boolean;
-  log?: {
-    info(...args): any;
-    error(...args): any;
-  };
-  formData?: AliPayForm;
-}
 
 class AlipaySdk {
   private sdkVersion: string;
@@ -102,23 +29,33 @@ class AlipaySdk {
 
     const privateKeyType = config.keyType === 'PKCS8' ? 'PRIVATE KEY' : 'RSA PRIVATE KEY';
     config.privateKey = this.formatKey(config.privateKey, privateKeyType);
+
     // 普通公钥模式和证书模式二选其一，传入了证书路径或内容认为是证书模式
     if (config.appCertPath || config.appCertContent) {
       // 证书模式，优先处理传入了证书内容的情况，其次处理传入证书文件路径的情况
+
       // 应用公钥证书序列号提取
-      config.appCertSn = is.empty(config.appCertContent) ? getSNFromPath(config.appCertPath, false)
+      config.appCertSn = is.empty(config.appCertContent)
+        ? getSNFromPath(config.appCertPath, false)
         : getSN(config.appCertContent, false);
+
       // 支付宝公钥证书序列号提取
-      config.alipayCertSn = is.empty(config.alipayPublicCertContent) ? getSNFromPath(config.alipayPublicCertPath, false)
+      config.alipayCertSn = is.empty(config.alipayPublicCertContent)
+        ? getSNFromPath(config.alipayPublicCertPath, false)
         : getSN(config.alipayPublicCertContent, false);
+
       // 支付宝根证书序列号提取
-      config.alipayRootCertSn = is.empty(config.alipayRootCertContent) ? getSNFromPath(config.alipayRootCertPath, true)
+      config.alipayRootCertSn = is.empty(config.alipayRootCertContent)
+        ? getSNFromPath(config.alipayRootCertPath, true)
         : getSN(config.alipayRootCertContent, true);
-      config.alipayPublicKey = is.empty(config.alipayPublicCertContent) ?
-      loadPublicKeyFromPath(config.alipayPublicCertPath) : loadPublicKey(config.alipayPublicCertContent);
+
+      config.alipayPublicKey = is.empty(config.alipayPublicCertContent)
+        ? loadPublicKeyFromPath(config.alipayPublicCertPath)
+        : loadPublicKey(config.alipayPublicCertContent);
+
       config.alipayPublicKey = this.formatKey(config.alipayPublicKey, 'PUBLIC KEY');
     } else if (config.alipayPublicKey) {
-        // 普通公钥模式，传入了支付宝公钥
+      // 普通公钥模式，传入了支付宝公钥
       config.alipayPublicKey = this.formatKey(config.alipayPublicKey, 'PUBLIC KEY');
     }
     this.config = Object.assign({
@@ -201,11 +138,14 @@ class AlipaySdk {
 
     // 计算签名
     const signData = sign(method, signParams, config);
+
     // 格式化 url
     const { url } = this.formatUrl(config.gateway, signData);
 
-    infoLog && infoLog('[AlipaySdk]start exec url: %s, method: %s, params: %s',
-      url, method, JSON.stringify(signParams));
+    // 打印日志
+    if (infoLog) {
+      infoLog('[AlipaySdk]start exec url: %s, method: %s, params: %s', url, method, JSON.stringify(signParams));
+    }
 
     return new Promise((resolve, reject) => {
       request.post({
@@ -214,7 +154,7 @@ class AlipaySdk {
         json: false,
         timeout: config.timeout,
         headers: { 'user-agent': this.sdkVersion },
-      /* tslint:disable-next-line */
+        /* tslint:disable-next-line */
       }, (err, _response, body) => {
         if (err) {
           err.message = '[AlipaySdk]exec error';
@@ -222,7 +162,10 @@ class AlipaySdk {
           return reject(err);
         }
 
-        infoLog && infoLog('[AlipaySdk]exec response: %s', body);
+        // 打印日志
+        if (infoLog) {
+          infoLog('[AlipaySdk]exec response: %s', body);
+        }
 
         try {
           let data;
@@ -264,11 +207,14 @@ class AlipaySdk {
 
     // 计算签名
     const signData = sign(method, signParams, config);
+
     // 格式化 url
     const { url, execParams } = this.formatUrl(config.gateway, signData);
 
-    infoLog && infoLog('[AlipaySdk]start exec url: %s, method: %s, params: %s',
-      url, method, JSON.stringify(signParams));
+    // 打印日志
+    if (infoLog) {
+      infoLog('[AlipaySdk]start exec url: %s, method: %s, params: %s', url, method, JSON.stringify(signParams));
+    }
 
     if (option.formData.getMethod() === 'get') {
       return new Promise((resolve) => {
@@ -336,7 +282,7 @@ class AlipaySdk {
      * 删除后变为
      *  :{"code":"10000"},"sign":"jumSvxTKwn24G5sAIN"}
      */
-    validateStr = validateStr.substr(startIndex + responseKey.length + 1);
+    validateStr = validateStr.substring(startIndex + responseKey.length + 1);
 
     /**
      * 删除最后一个 "sign" 及之后的字符串
@@ -344,7 +290,7 @@ class AlipaySdk {
      *  :{"code":"10000"},
      * {} 之间就是待验签的字符串
      */
-    validateStr = validateStr.substr(0, lastIndex);
+    validateStr = validateStr.substring(0, lastIndex);
 
     // 删除第一个 { 之前的任何字符
     validateStr = validateStr.replace(/^[^{]*{/g, '{');
@@ -398,8 +344,10 @@ class AlipaySdk {
     const infoLog = (option.log && is.fn(option.log.info)) ? option.log.info : null;
     const errorLog = (option.log && is.fn(option.log.error)) ? option.log.error : null;
 
-    infoLog && infoLog('[AlipaySdk]start exec, url: %s, method: %s, params: %s',
-      url, method, JSON.stringify(execParams));
+    // 打印日志
+    if (infoLog) {
+      infoLog('[AlipaySdk]start exec, url: %s, method: %s, params: %s', url, method, JSON.stringify(execParams));
+    }
 
     return new Promise((resolve, reject) => {
       config.urllib.request(url, {
@@ -475,6 +423,7 @@ class AlipaySdk {
 
     // 根据服务端返回的结果截取需要验签的目标字符串
     const validateStr = this.getSignStr(signStr, responseKey);
+
     // 服务端返回的签名
     const serverSign = JSON.parse(signStr).sign;
 

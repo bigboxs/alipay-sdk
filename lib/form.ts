@@ -3,16 +3,7 @@
  * @email [tudou527@gmail.com]
 */
 import * as isJSON from 'is-json';
-
-export interface IFile {
-  name: string;
-  path: string;
-  fieldName: string;
-}
-export interface IField {
-  name: string;
-  value: string | Object;
-}
+import { IFile, IField } from './interface';
 
 class AliPayForm {
   private method: 'get' | 'post';
@@ -25,8 +16,22 @@ class AliPayForm {
     this.method = 'post';
   }
 
+  /**
+   * 获取字段
+   * @returns Array
+   */
   getFields() { return this.fields; }
+
+  /**
+   * 获取文件
+   * @returns Array
+   */
   getFiles() { return this.files; }
+
+  /**
+   * 获取方法
+   * @returns String
+   */
   getMethod() { return this.method; }
 
   /**

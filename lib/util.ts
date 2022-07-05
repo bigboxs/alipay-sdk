@@ -10,7 +10,7 @@ import * as snakeCaseKeys from 'snakecase-keys';
 import * as CryptoJS from 'crypto-js';
 import { omit, padEnd } from 'lodash';
 
-import { AlipaySdkConfig } from './alipay';
+import { AlipaySdkConfig } from './interface';
 
 const ALIPAY_ALGORITHM_MAPPING = {
   RSA: 'RSA-SHA1',
@@ -113,7 +113,7 @@ function sign(method: string, params: any = {}, config: AlipaySdkConfig): any {
 
   // 计算签名
   const sign = crypto.createSign(ALIPAY_ALGORITHM_MAPPING[config.signType])
-                    .update(signStr, 'utf8').sign(config.privateKey, 'base64');
+    .update(signStr, 'utf8').sign(config.privateKey, 'base64');
 
   return Object.assign(decamelizeParams, { sign });
 }
