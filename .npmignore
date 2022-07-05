@@ -4,6 +4,7 @@ lib/*.ts
 !lib/*.d.ts
 .babelrc
 .eslint*
+.github
 debug.js
 tsconfig.eslint.json
 .travis.yml
