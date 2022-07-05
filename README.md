@@ -37,9 +37,9 @@ alipaySdk = new AlipaySdk({
 
 // 无需加密的接口
 const result = await alipaySdk.exec('alipay.system.oauth.token', {
-	grantType: 'authorization_code',
-	code: 'code',
-	refreshToken: 'token'
+  grantType: 'authorization_code',
+  code: 'code',
+  refreshToken: 'token'
 });
 
 // 需要AES加解密的接口
