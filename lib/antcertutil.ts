@@ -2,7 +2,6 @@
  * @author yisheng.cl
  * @email [yisheng.cl@alibaba-inc.com]
 */
-
 import * as fs from 'fs';
 import bignumber_js_1 from 'bignumber.js';
 import * as crypto from 'crypto';

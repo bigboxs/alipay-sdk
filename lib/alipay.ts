@@ -2,7 +2,6 @@
  * @author tudou527
  * @email [tudou527@gmail.com]
 */
-
 import * as fs from 'fs';
 import * as is from 'is';
 import * as crypto from 'crypto';
@@ -12,7 +11,6 @@ import * as isuri from 'isuri';
 import * as decamelize from 'decamelize';
 import * as camelcaseKeys from 'camelcase-keys';
 import * as snakeCaseKeys from 'snakecase-keys';
-
 import { AlipaySdkConfig, AlipaySdkCommonResult, IRequestParams, IRequestOption } from './interface';
 import { getSNFromPath, getSN, loadPublicKey, loadPublicKeyFromPath } from './antcertutil';
 import { sign, ALIPAY_ALGORITHM_MAPPING, aesDecrypt } from './util';
@@ -232,9 +230,9 @@ class AlipaySdk {
       resolve(`
         <form action="${url}" method="post" name="${formName}" id="${formName}">
           ${Object.keys(execParams).map((key) => {
-            const value = String(execParams[key]).replace(/\"/g, '&quot;');
-            return `<input type="hidden" name="${key}" value="${value}" />`;
-          }).join('')}
+        const value = String(execParams[key]).replace(/\"/g, '&quot;');
+        return `<input type="hidden" name="${key}" value="${value}" />`;
+      }).join('')}
         </form>
         <script>document.forms["${formName}"].submit();</script>
       `);

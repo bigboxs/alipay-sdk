@@ -2,14 +2,12 @@
  * @author tudou527
  * @email [tudou527@gmail.com]
 */
-
 import * as crypto from 'crypto';
 import * as moment from 'moment';
 import * as iconv from 'iconv-lite';
 import * as snakeCaseKeys from 'snakecase-keys';
 import * as CryptoJS from 'crypto-js';
 import { omit, padEnd } from 'lodash';
-
 import { AlipaySdkConfig } from './interface';
 
 const ALIPAY_ALGORITHM_MAPPING = {
@@ -17,6 +15,7 @@ const ALIPAY_ALGORITHM_MAPPING = {
   RSA2: 'RSA-SHA256',
 };
 
+// 解析加密字段
 function parseKey(aesKey) {
   return {
     iv: CryptoJS.enc.Hex.parse(padEnd('', 32, '0')),
@@ -99,7 +98,7 @@ function sign(method: string, params: any = {}, config: AlipaySdkConfig): any {
     }
   }
 
-  // params key 驼峰转下划线
+  // 驼峰转下划线
   const decamelizeParams = snakeCaseKeys(signParams);
 
   // 排序

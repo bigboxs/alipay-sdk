@@ -1,6 +1,8 @@
-
+/**
+ * @author bigboxs
+ * @email [bigboxs@outlook.com]
+*/
 import AliPayForm from './form';
-
 export interface AlipaySdkConfig {
   /** 应用ID */
   appId: string;
