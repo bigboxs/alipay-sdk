@@ -1,0 +1,13 @@
+test
+coverage
+lib/*.ts
+!lib/*.d.ts
+.babelrc
+.eslint*
+debug.js
+tsconfig.eslint.json
+.travis.yml
+jest.config.js
+tsconfig.json
+tslint.json
+LICENSE
